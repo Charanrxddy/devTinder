@@ -7,10 +7,20 @@ const {studentDetails} = require("./admin/studentDetails");
 app.use("/admin",studentDetails);
 
 app.get("/admin/updateDetails",(req,res)=>{
-    res.send("Continue updating Details");
+    try{
+        res.send("Continue updating Details");
+    }
+    catch(e){
+        res.send("error!!",e);
+    }
 }); 
 app.get("/admin/deleteDetails",(req,res)=>{
-    res.send("Continue deleting Details");
+    try{
+        res.send("Continue deleting Details");
+    }
+    catch(e){
+        res.send("error!!",e);
+    }
 }); 
 
 
