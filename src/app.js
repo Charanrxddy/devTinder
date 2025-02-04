@@ -1,33 +1,32 @@
 const express = require("express");
 const app = express();
 
-const {studentDetails} = require("./admin/studentDetails"); 
+const {connectDb} = require("./config/database");
+const User = require("./models/user");
 
-
-app.use("/admin",studentDetails);
-
-app.get("/admin/updateDetails",(req,res)=>{
-    try{
-        res.send("Continue updating Details");
-    }
-    catch(e){
-        res.send("error!!",e);
-    }
-}); 
-app.get("/admin/deleteDetails",(req,res)=>{
-    try{
-        res.send("Continue deleting Details");
-    }
-    catch(e){
-        res.send("error!!",e);
-    }
-}); 
-
-
-
-
-
-
-app.listen(3000,()=>{
-    console.log("listening on port 3000....");
+app.post("/users",async (req,res)=>{
+    const newUser = new User({
+        firstName:"Gopicharanreddy",
+        lastName :"Gangula",
+        emailId :"Gopicharanreddygangula@gmail.com",
+        password:"CFGHJ%^"
+    });
+    await newUser.save();
+    res.send("posted successfully");
 });
+
+
+
+connectDb()
+    .then(()=>{
+        console.log("connected to database");
+        app.listen(3000,()=>{
+            console.log("listening on port 3000....");
+        });
+    })
+    .catch((e)=>{
+        console.log("database cannot be connected");
+    })
+
+
+
