@@ -1,10 +1,16 @@
 const express = require("express");
 const app = express();
+const {validateData} = require("./Utils/validateData");
+const bcrypt = require("bcrypt");
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
 const {connectDb} = require("./config/database");
 const User = require("./models/user");
 
 app.use(express.json());
+app.use(cookieParser());
+
 
 app.patch("/users", async (req, res) => {
     try {
@@ -78,7 +84,14 @@ app.get("/users",async (req,res)=>{
 
 app.post("/users",async (req,res)=>{
     try{
-        const newUser = new User(req.body);
+        validateData(req);
+
+        const {firstName,lastName,emailId,password} = req.body;
+
+        const hash = bcrypt.hashSync(password, 10);
+
+
+        const newUser = new User({firstName,lastName,emailId,password:hash});
         await newUser.save();
         res.send("posted successfully");
     }
@@ -86,6 +99,46 @@ app.post("/users",async (req,res)=>{
         res.status(500).send({ message: "Something went wrong", error: error.message });
     }
 });
+ 
+app.post("/login",async(req,res)=>{
+    try{
+        const {emailId,password} = req.body;
+        const userDetails = await User.findOne({emailId:emailId});
+        if(!userDetails){
+            throw new Error("Invalid credentials");
+        }
+        const isPasswordValid = await bcrypt.compare(password, userDetails.password);
+
+        if (isPasswordValid){
+            const token = await jwt.sign({_id:userDetails._id}, 'secretKey');
+            res.cookie("token",token);
+            res.send("Login successfull")
+        }
+        else{
+            throw new Error("Invalid credentials");
+        }
+    }
+    catch(error){
+        res.status(500).send({ message: "Something went wrong", error: error.message });
+    }
+});
+
+app.get("/profile",async(req,res)=>{
+    try{
+        const cookies = req.cookies;
+        const {token} = cookies;
+        const decoded = await jwt.verify(token, 'secretKey');
+        const {_id} = decoded;
+        const realUser = await User.findById(_id);
+
+        console.log(realUser);
+        res.send(decoded);
+
+    }
+    catch(error){
+        res.status(500).send({ message: "Something went wrong", error: error.message });
+    }
+})
 
 
 
